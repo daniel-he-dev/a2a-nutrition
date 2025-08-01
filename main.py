@@ -280,9 +280,10 @@ IMPORTANT: Always use the available tools when analyzing specific foods or calcu
                 chunk_count += 1
                 logger.info(f"📦 [{request_id}] Processing chunk #{chunk_count}")
 
-                if response_chunk.get("is_task_complete", False):
+                if response_chunk.get("is_task_complete", True):
                     # Final response - complete the task
                     final_content = response_chunk.get("content", "")
+                    has_updates = True  # Mark that we received a final response
                     logger.info(f"✅ [{request_id}] Task completed with final response")
                     logger.info(
                         f"📊 [{request_id}] Final response length: {len(final_content)} characters"
@@ -290,6 +291,17 @@ IMPORTANT: Always use the available tools when analyzing specific foods or calcu
                     logger.info(
                         f"🏁 [{request_id}] Total chunks processed: {chunk_count}"
                     )
+
+                    # Send the final response as a streaming update BEFORE completing the task
+                    if final_content.strip():
+                        logger.info(
+                            f"📤 [{request_id}] Sending final response to client"
+                        )
+                        await updater.update_status(
+                            TaskState.working,
+                            new_agent_text_message(final_content, session_id, task.id),
+                        )
+                        logger.info(f"✅ [{request_id}] Final response sent to client")
 
                     # Add the response as an artifact and complete the task
                     logger.info(
