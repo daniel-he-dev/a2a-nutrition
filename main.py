@@ -7,6 +7,7 @@ import os
 import json
 import uvicorn
 import logging
+import asyncio
 from datetime import datetime
 from dotenv import load_dotenv
 from typing import Dict, Any, Optional, AsyncIterable
@@ -274,75 +275,99 @@ IMPORTANT: Always use the available tools when analyzing specific foods or calcu
                 f"📥 [{request_id}] Beginning to process streaming response chunks..."
             )
 
-            async for response_chunk in self._stream_llm_response(
-                user_message, session_id
-            ):
-                chunk_count += 1
-                logger.info(f"📦 [{request_id}] Processing chunk #{chunk_count}")
-
-                if response_chunk.get("is_task_complete", True):
-                    # Final response - complete the task
-                    final_content = response_chunk.get("content", "")
-                    has_updates = True  # Mark that we received a final response
-                    logger.info(f"✅ [{request_id}] Task completed with final response")
-                    logger.info(
-                        f"📊 [{request_id}] Final response length: {len(final_content)} characters"
-                    )
-                    logger.info(
-                        f"🏁 [{request_id}] Total chunks processed: {chunk_count}"
-                    )
-
-                    # Send the final response as a streaming update BEFORE completing the task
-                    if final_content.strip():
+            # Add timeout to prevent hanging tasks
+            try:
+                async with asyncio.timeout(120):  # 2 minute timeout
+                    async for response_chunk in self._stream_llm_response(
+                        user_message, session_id
+                    ):
+                        chunk_count += 1
                         logger.info(
-                            f"📤 [{request_id}] Sending final response to client"
+                            f"📦 [{request_id}] Processing chunk #{chunk_count}"
                         )
-                        await updater.update_status(
-                            TaskState.working,
-                            new_agent_text_message(final_content, session_id, task.id),
-                        )
-                        logger.info(f"✅ [{request_id}] Final response sent to client")
 
-                    # Add the response as an artifact and complete the task
-                    logger.info(
-                        f"📎 [{request_id}] Adding response as artifact 'nutrition_analysis'"
+                        if response_chunk.get("is_task_complete", False):
+                            # Final response - complete the task
+                            final_content = response_chunk.get("content", "")
+                            has_updates = True  # Mark that we received a final response
+                            logger.info(
+                                f"✅ [{request_id}] Task completed with final response"
+                            )
+                            logger.info(
+                                f"📊 [{request_id}] Final response length: {len(final_content)} characters"
+                            )
+                            logger.info(
+                                f"🏁 [{request_id}] Total chunks processed: {chunk_count}"
+                            )
+
+                            # Send the final response as a streaming update BEFORE completing the task
+                            if final_content.strip():
+                                logger.info(
+                                    f"📤 [{request_id}] Sending final response to client"
+                                )
+                                await updater.update_status(
+                                    TaskState.working,
+                                    new_agent_text_message(
+                                        final_content, session_id, task.id
+                                    ),
+                                )
+                                logger.info(
+                                    f"✅ [{request_id}] Final response sent to client"
+                                )
+
+                            # Add the response as an artifact and complete the task
+                            logger.info(
+                                f"📎 [{request_id}] Adding response as artifact 'nutrition_analysis'"
+                            )
+                            await updater.add_artifact(
+                                [Part(root=TextPart(text=final_content))],
+                                name="nutrition_analysis",
+                            )
+                            logger.info(
+                                f"✅ [{request_id}] Artifact added successfully"
+                            )
+
+                            logger.info(f"🏁 [{request_id}] Completing task...")
+                            await updater.complete()
+                            logger.info(f"✅ [{request_id}] Task completion confirmed")
+                            break
+                        else:
+                            # Intermediate update
+                            update_content = response_chunk.get("updates", "")
+                            if update_content:
+                                has_updates = True
+                                logger.info(
+                                    f"📝 [{request_id}] Streaming update #{chunk_count}: {len(update_content)} chars"
+                                )
+                                logger.debug(
+                                    f"🔤 [{request_id}] Update content: {update_content[:100]}..."
+                                )
+
+                                logger.info(
+                                    f"📤 [{request_id}] Sending streaming update to client"
+                                )
+                                await updater.update_status(
+                                    TaskState.working,
+                                    new_agent_text_message(
+                                        update_content, session_id, task.id
+                                    ),
+                                )
+                                logger.info(
+                                    f"✅ [{request_id}] Streaming update sent successfully"
+                                )
+                            else:
+                                logger.warning(
+                                    f"⚠️ [{request_id}] Chunk #{chunk_count} had no update content"
+                                )
+
+            except asyncio.TimeoutError:
+                logger.error(f"⏰ [{request_id}] Streaming timeout after 2 minutes")
+                await event_queue.enqueue_event(
+                    new_agent_text_message(
+                        "The request took too long to process. Please try again with a simpler query."
                     )
-                    await updater.add_artifact(
-                        [Part(root=TextPart(text=final_content))],
-                        name="nutrition_analysis",
-                    )
-                    logger.info(f"✅ [{request_id}] Artifact added successfully")
-
-                    logger.info(f"🏁 [{request_id}] Completing task...")
-                    await updater.complete()
-                    logger.info(f"✅ [{request_id}] Task completion confirmed")
-                    break
-                else:
-                    # Intermediate update
-                    update_content = response_chunk.get("updates", "")
-                    if update_content:
-                        has_updates = True
-                        logger.info(
-                            f"📝 [{request_id}] Streaming update #{chunk_count}: {len(update_content)} chars"
-                        )
-                        logger.debug(
-                            f"🔤 [{request_id}] Update content: {update_content[:100]}..."
-                        )
-
-                        logger.info(
-                            f"📤 [{request_id}] Sending streaming update to client"
-                        )
-                        await updater.update_status(
-                            TaskState.working,
-                            new_agent_text_message(update_content, session_id, task.id),
-                        )
-                        logger.info(
-                            f"✅ [{request_id}] Streaming update sent successfully"
-                        )
-                    else:
-                        logger.warning(
-                            f"⚠️ [{request_id}] Chunk #{chunk_count} had no update content"
-                        )
+                )
+                return
 
             if not has_updates:
                 logger.error(
@@ -360,6 +385,10 @@ IMPORTANT: Always use the available tools when analyzing specific foods or calcu
                 await updater.complete()
                 logger.info(f"✅ [{request_id}] Error task completion confirmed")
 
+        except asyncio.CancelledError:
+            logger.warning(f"🛑 [{request_id}] Task execution was cancelled")
+            # Don't treat cancellation as an error - just re-raise it
+            raise
         except Exception as e:
             logger.error(
                 f"💥 [{request_id}] Critical error during LLM execution: {str(e)}",
@@ -391,6 +420,7 @@ IMPORTANT: Always use the available tools when analyzing specific foods or calcu
         logger.info(f"📏 Query length: {len(query)} characters")
         logger.info(f"🆔 Target session ID: {session_id}")
 
+        session = None
         try:
             # Get or create session
             logger.info(
@@ -547,6 +577,10 @@ IMPORTANT: Always use the available tools when analyzing specific foods or calcu
                 f"📈 LLM streaming completed - processed {event_count} events total"
             )
 
+        except asyncio.CancelledError:
+            logger.warning(f"🛑 LLM streaming was cancelled for session: {session_id}")
+            # Re-raise CancelledError to properly handle cancellation
+            raise
         except Exception as e:
             logger.error(
                 f"💥 Critical error during LLM streaming: {str(e)}", exc_info=True
