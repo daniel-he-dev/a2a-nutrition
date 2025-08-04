@@ -5,6 +5,7 @@ An intelligent nutrition analysis and meal planning assistant built with Google 
 ## 🚀 Features
 
 ### Intelligence & Capabilities
+
 - **LLM-Powered Responses**: Uses Google's Gemini 2.0 Flash model for intelligent, contextual responses
 - **Real-time Nutrition Analysis**: Access to comprehensive nutrition database via Nutritionix API
 - **Conversational Interface**: Natural language processing for intuitive interactions
@@ -12,6 +13,7 @@ An intelligent nutrition analysis and meal planning assistant built with Google 
 - **Streaming Responses**: Real-time response generation for better user experience
 
 ### Nutrition Analysis
+
 - **Individual Food Analysis**: Detailed nutritional breakdown of any food item
 - **Meal Calculation**: Total nutrition analysis for complete meals
 - **Personalized Recommendations**: AI-generated suggestions based on dietary goals
@@ -19,6 +21,7 @@ An intelligent nutrition analysis and meal planning assistant built with Google 
 - **Dietary Restriction Support**: Accommodates various dietary needs and health conditions
 
 ### Smart Features
+
 - **Context-Aware Responses**: Understands dietary goals, restrictions, and preferences
 - **Educational Content**: Provides nutrition science explanations and health guidance
 - **Goal-Oriented Planning**: Meal suggestions tailored to specific health objectives
@@ -29,11 +32,13 @@ An intelligent nutrition analysis and meal planning assistant built with Google 
 ### Core Components
 
 1. **LLM Nutrition Agent** (`llm_nutrition_agent.py`)
+
    - Google ADK integration with Gemini model
    - Session and memory management
    - Streaming response handling
 
 2. **Nutrition Tools** (`nutrition_tools.py`)
+
    - Nutritionix API client
    - Food analysis functions
    - Meal calculation utilities
@@ -45,17 +50,19 @@ An intelligent nutrition analysis and meal planning assistant built with Google 
    - Enhanced agent card configuration
 
 ### Technology Stack
+
 - **AI Framework**: Google ADK (Agent Development Kit)
 - **LLM**: Google Gemini 2.0 Flash
 - **A2A Framework**: Agent-to-Agent communication protocol
 - **Nutrition Data**: Nutritionix API
-- **Backend**: Python with asyncio
 - **Server**: Uvicorn/Starlette
 
 ## 📋 Prerequisites
 
 ### Required API Keys
+
 1. **Google API Key**: For Gemini LLM access
+
    - Get from [Google AI Studio](https://makersuite.google.com/app/apikey)
    - Required for intelligent responses and conversation capabilities
 
@@ -64,7 +71,9 @@ An intelligent nutrition analysis and meal planning assistant built with Google 
    - Used for accurate food nutrition analysis
 
 ### Environment Setup
+
 Create a `.env` file with:
+
 ```env
 GOOGLE_API_KEY=your_google_api_key_here
 GEMINI_MODEL=gemini-2.0-flash-001
@@ -75,20 +84,24 @@ NUTRITIONIX_APP_ID=your_nutritionix_app_id_here
 ## 🛠️ Installation
 
 1. **Install Dependencies**:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 2. **Configure Environment**:
+
    - Copy `.env.example` to `.env`
    - Add your API keys
 
 3. **Test the Agent**:
+
 ```bash
 python test_llm_agent.py
 ```
 
 4. **Start the Server**:
+
 ```bash
 python main_llm.py
 ```
@@ -98,11 +111,13 @@ The server will be available at `http://localhost:8000`
 ## 🧪 Testing
 
 ### Quick Test
+
 ```bash
 python test_llm_agent.py
 ```
 
 This will run comprehensive tests including:
+
 - Simple food analysis
 - Complex meal analysis
 - Personalized meal planning
@@ -112,21 +127,27 @@ This will run comprehensive tests including:
 ### Manual Testing Examples
 
 **Simple Query**:
+
 > "What are the calories in a large apple?"
 
 **Complex Analysis**:
+
 > "Analyze my breakfast: 2 scrambled eggs, 2 slices of whole wheat toast with butter, and a glass of orange juice"
 
 **Personalized Planning**:
+
 > "I'm trying to lose weight and need a high-protein, low-carb lunch suggestion under 400 calories"
 
 **Health-Specific Advice**:
+
 > "I'm diabetic and want to know if quinoa is a good rice substitute"
 
 ## 🔧 Configuration
 
 ### Model Selection
+
 Change the LLM model in `.env`:
+
 ```env
 GEMINI_MODEL=gemini-2.0-flash-001  # Fast, efficient
 # or
@@ -134,13 +155,17 @@ GEMINI_MODEL=gemini-1.5-pro        # More capable, slower
 ```
 
 ### Logging
+
 Adjust logging level in the main files:
+
 ```python
 logging.basicConfig(level=logging.INFO)  # INFO, DEBUG, WARNING, ERROR
 ```
 
 ### Memory and Sessions
+
 The agent automatically manages:
+
 - **Session Persistence**: Conversations maintain context
 - **Memory Management**: Relevant information is retained across interactions
 - **Task Continuity**: Multi-turn conversations are supported
@@ -148,12 +173,15 @@ The agent automatically manages:
 ## 🔗 Integration
 
 ### A2A Agent Card
+
 The agent exposes these skills:
+
 - `intelligent_nutrition_analysis`: AI-powered food and meal analysis
 - `meal_planning_assistant`: Personalized meal planning
 - `nutrition_education`: Educational content and guidance
 
 ### Input/Output Modes
+
 - **Input**: `text/plain`, `application/json`
 - **Output**: `text/plain`, `application/json`
 - **Capabilities**: Streaming, task history
@@ -161,16 +189,19 @@ The agent exposes these skills:
 ## 🔍 Key Improvements Over Basic Version
 
 ### Intelligence
+
 - **Contextual Understanding**: Interprets user intent and dietary context
 - **Personalized Responses**: Tailors advice to individual needs and goals
 - **Educational Value**: Explains nutritional concepts and health implications
 
 ### Functionality
+
 - **Complex Query Handling**: Processes multi-food meals and comparative requests
 - **Goal Integration**: Considers weight loss, muscle building, health conditions
 - **Recommendation Engine**: Suggests foods, meals, and dietary changes
 
 ### User Experience
+
 - **Natural Conversation**: Handles follow-up questions and clarifications
 - **Streaming Responses**: Real-time feedback during processing
 - **Error Recovery**: Graceful handling of unclear or incomplete queries
@@ -180,11 +211,13 @@ The agent exposes these skills:
 ### Common Issues
 
 1. **LLM Not Responding**:
+
    - Check `GOOGLE_API_KEY` is valid and set
    - Verify internet connection
    - Check API quotas and billing
 
 2. **Nutrition Data Missing**:
+
    - Verify `NUTRITIONIX_API_KEY` configuration
    - Agent will fall back to mock data if API unavailable
 
@@ -193,7 +226,9 @@ The agent exposes these skills:
    - Check Python version compatibility (3.8+)
 
 ### Debug Mode
+
 Enable debug logging:
+
 ```python
 logging.basicConfig(level=logging.DEBUG)
 ```
