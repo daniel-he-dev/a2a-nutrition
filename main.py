@@ -252,12 +252,11 @@ IMPORTANT: Always use the available tools when analyzing specific foods or calcu
 
             # Create task updater for streaming updates
             # Ensure session_id is always a valid string
-            final_session_id = session_id or task.id
             logger.info(f"📡 [{request_id}] Creating task updater for streaming...")
             logger.info(
-                f"🔧 [{request_id}] Task ID: {task.id}, Session ID: {final_session_id}"
+                f"🔧 [{request_id}] Task ID: {task.id}, Context ID: {task.context_id}"
             )
-            updater = TaskUpdater(event_queue, task.id, final_session_id)
+            updater = TaskUpdater(event_queue, task.id, task.context_id)
             logger.info(f"✅ [{request_id}] Task updater created successfully")
 
             # Stream responses from the LLM agent
